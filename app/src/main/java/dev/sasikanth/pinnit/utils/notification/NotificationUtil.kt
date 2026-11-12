@@ -11,16 +11,15 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationCompat.Action
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
+import androidx.core.graphics.drawable.IconCompat
 import androidx.navigation.NavDeepLinkBuilder
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.sasikanth.pinnit.R
 import dev.sasikanth.pinnit.activity.MainActivity
 import dev.sasikanth.pinnit.background.receivers.RepostNotificationReceiver
-import dev.sasikanth.pinnit.background.receivers.UnpinNotificationReceiver
 import dev.sasikanth.pinnit.data.PinnitNotification
 import dev.sasikanth.pinnit.editor.EditorScreenArgs
 import dev.sasikanth.pinnit.editor.EditorTransition.SharedAxis
@@ -29,7 +28,8 @@ import javax.inject.Singleton
 
 @Singleton
 class NotificationUtil @Inject constructor(
-  @ApplicationContext private val context: Context
+  @ApplicationContext private val context: Context,
+  private val sourceAppIcons: SourceAppIcons
 ) {
 
   companion object {
@@ -104,17 +104,6 @@ class NotificationUtil @Inject constructor(
       .setArguments(editorScreenArgs)
       .createPendingIntent()
 
-    val unpinIntent = Intent(context, UnpinNotificationReceiver::class.java).apply {
-      action = UnpinNotificationReceiver.ACTION_UNPIN
-      putExtra(UnpinNotificationReceiver.EXTRA_NOTIFICATION_UUID, notification.uuid.toString())
-    }
-    val unpinPendingIntent = PendingIntent.getBroadcast(
-      context,
-      notification.uuid.hashCode(),
-      unpinIntent,
-      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-    )
-
     // Fired when the user swipes the notification away: pinned ones come back.
     val repostIntent = Intent(context, RepostNotificationReceiver::class.java).apply {
       action = RepostNotificationReceiver.ACTION_REPOST
@@ -127,6 +116,7 @@ class NotificationUtil @Inject constructor(
       PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
+    // No actions on purpose: pinned notes can only be unpinned or deleted from inside the app.
     val builder = NotificationCompat.Builder(context, CHANNEL_ID)
       .setSmallIcon(R.drawable.ic_pinnit_notification)
       .setContentTitle(notification.title)
@@ -138,12 +128,29 @@ class NotificationUtil @Inject constructor(
           notification.content
         )
       )
-      .addAction(Action(R.drawable.ic_pinnit_pin, context.getString(R.string.unpin), unpinPendingIntent))
-      // No "Delete" action here on purpose: pinned notes can only be deleted from inside the app.
       .setOngoing(true)
       .setDeleteIntent(repostPendingIntent)
 
+    val sourcePackage = notification.sourcePackage
+    if (sourcePackage != null) {
+      // Look like the original notification: its icons, its app name, and tapping opens that app.
+      sourceAppIcons.smallIcon(sourcePackage)?.let { builder.setSmallIcon(IconCompat.createWithBitmap(it)) }
+      sourceAppIcons.appIcon(sourcePackage)?.let { builder.setLargeIcon(it) }
+      builder.setSubText(notification.sourceAppName ?: sourcePackage)
+      sourceAppPendingIntent(sourcePackage, notification)?.let { builder.setContentIntent(it) }
+    }
+
     return builder.build()
+  }
+
+  private fun sourceAppPendingIntent(sourcePackage: String, notification: PinnitNotification): PendingIntent? {
+    val launchIntent = context.packageManager.getLaunchIntentForPackage(sourcePackage) ?: return null
+    return PendingIntent.getActivity(
+      context,
+      notification.uuid.hashCode(),
+      launchIntent,
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
   }
 
   private fun createNotificationChannel() {

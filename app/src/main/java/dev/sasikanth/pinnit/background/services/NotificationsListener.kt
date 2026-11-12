@@ -8,6 +8,7 @@ import androidx.core.app.NotificationCompat
 import dagger.hilt.android.AndroidEntryPoint
 import dev.sasikanth.pinnit.notifications.NotificationRepository
 import dev.sasikanth.pinnit.utils.DispatcherProvider
+import dev.sasikanth.pinnit.utils.notification.SourceAppIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -45,6 +46,9 @@ class NotificationsListener : NotificationListenerService() {
   @Inject
   lateinit var dispatcherProvider: DispatcherProvider
 
+  @Inject
+  lateinit var sourceAppIcons: SourceAppIcons
+
   private val scope by lazy { CoroutineScope(SupervisorJob() + dispatcherProvider.io) }
 
   // Serialises saves so the duplicate check sees the previous insert.
@@ -65,7 +69,10 @@ class NotificationsListener : NotificationListenerService() {
     val appName = appLabel(sourcePackage)
     val postedAt = Instant.ofEpochMilli(sbn.postTime)
 
+    val smallIcon = sbn.notification.smallIcon
+
     scope.launch {
+      sourceAppIcons.saveSmallIcon(sourcePackage, smallIcon)
       saveMutex.withLock {
         val latest = repository.latestFromSource(sourcePackage)
         val isDuplicate = latest != null &&
