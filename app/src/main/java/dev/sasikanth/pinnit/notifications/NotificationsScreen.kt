@@ -2,7 +2,17 @@ package dev.sasikanth.pinnit.notifications
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.view.MenuItem
+import androidx.appcompat.widget.SearchView
+import androidx.core.content.getSystemService
+import dev.sasikanth.pinnit.data.preferences.HistorySettings
+import dev.sasikanth.pinnit.notifications.adapter.DayHeaderDecoration
+import java.text.Normalizer
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -47,6 +57,11 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class NotificationsScreen : Fragment(), NotificationsScreenUi {
 
+  companion object {
+    private const val NOTES_FILTER = ""
+    private val DIACRITICS = Regex("\\p{Mn}+")
+  }
+
   @Inject
   lateinit var utcClock: UtcClock
 
@@ -61,6 +76,17 @@ class NotificationsScreen : Fragment(), NotificationsScreenUi {
 
   @Inject
   lateinit var dispatcherProvider: DispatcherProvider
+
+  @Inject
+  lateinit var historySettings: HistorySettings
+
+  // Everything the screen model gives us; the adapter gets this list after search and app filter.
+  private var allNotifications: List<PinnitNotification> = emptyList()
+  private var searchQuery: String = ""
+
+  // null = all apps, NOTES_FILTER = only my own notes, otherwise a source package.
+  private var appFilter: String? = null
+  private var appFilterName: String? = null
 
   @Inject
   @DateTimeFormat(DateTimeFormat.Type.ScheduleDateFormat)
@@ -104,11 +130,15 @@ class NotificationsScreen : Fragment(), NotificationsScreenUi {
     binding.toolbar.inflateMenu(R.menu.notifications_screen)
     binding.toolbar.setOnMenuItemClickListener { item ->
       when (item.itemId) {
+        R.id.filterByApp -> showFilterByAppDialog()
         R.id.clearHistory -> showClearHistoryDialog()
         R.id.openTrash -> startActivity(TrashActivity.intent(requireContext()))
+        R.id.ignoredApps -> showIgnoredAppsDialog()
+        R.id.retention -> showRetentionDialog()
       }
       true
     }
+    setUpSearch(binding.toolbar.menu.findItem(R.id.search))
 
     adapter = NotificationsListAdapter(
       utcClock = utcClock,
@@ -118,11 +148,15 @@ class NotificationsScreen : Fragment(), NotificationsScreenUi {
       onToggleNotificationPinClicked = ::onToggleNotificationPinClicked,
       onNotificationClicked = ::onNotificationClicked,
       onEditNotificationScheduleClicked = ::onEditNotificationScheduleClicked,
-      onRemoveNotificationScheduleClicked = ::onRemoveNotificationScheduleClicked
+      onRemoveNotificationScheduleClicked = ::onRemoveNotificationScheduleClicked,
+      onNotificationLongClicked = ::onNotificationLongClicked
     )
     adapter.registerAdapterDataObserver(adapterDataObserver)
     binding.notificationsRecyclerView.adapter = adapter
     binding.notificationsRecyclerView.itemAnimator = NotificationPinItemAnimator()
+    binding.notificationsRecyclerView.addItemDecoration(
+      DayHeaderDecoration(requireContext()) { position -> adapter.currentList.getOrNull(position) }
+    )
     binding.notificationsRecyclerView.applySystemWindowInsetsToPadding(bottom = true, left = true, right = true)
     binding.notificationsRecyclerView.doOnPreDraw { startPostponedEnterTransition() }
 
@@ -179,10 +213,208 @@ class NotificationsScreen : Fragment(), NotificationsScreenUi {
 
   override fun showNotifications(notifications: List<PinnitNotification>) {
     binding.notificationsRecyclerView.isVisible = true
-    adapter.submitList(notifications)
+    allNotifications = notifications
+    applyFilters()
+  }
+
+  private fun applyFilters() {
+    val query = searchQuery.normalizedForSearch()
+    val filtered = allNotifications.filter { notification ->
+      val matchesApp = when (val filter = appFilter) {
+        null -> true
+        NOTES_FILTER -> notification.sourcePackage == null
+        else -> notification.sourcePackage == filter
+      }
+      val matchesQuery = query.isEmpty() || listOfNotNull(notification.title, notification.content, notification.sourceAppName)
+        .any { it.normalizedForSearch().contains(query) }
+      matchesApp && matchesQuery
+    }
+
+    adapter.submitList(filtered) {
+      _binding?.notificationsRecyclerView?.invalidateItemDecorations()
+    }
+
+    val noResults = filtered.isEmpty() && allNotifications.isNotEmpty()
+    if (allNotifications.isNotEmpty()) {
+      binding.noNotificationsTextView.setText(if (noResults) R.string.no_results else R.string.no_notifications)
+      binding.noNotificationsTextView.isVisible = noResults
+      binding.noNotificationsImageView.isVisible = noResults
+    }
+    binding.toolbarTitleTextView.text = appFilterName ?: getString(R.string.toolbar_title_notifications)
+  }
+
+  private fun String.normalizedForSearch(): String =
+    Normalizer.normalize(this, Normalizer.Form.NFD).replace(DIACRITICS, "").lowercase().trim()
+
+  private fun setUpSearch(searchItem: MenuItem) {
+    val searchView = searchItem.actionView as SearchView
+    searchView.queryHint = getString(R.string.menu_search)
+    searchView.maxWidth = Int.MAX_VALUE
+    searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+      override fun onQueryTextSubmit(query: String?): Boolean {
+        searchView.clearFocus()
+        return true
+      }
+
+      override fun onQueryTextChange(newText: String?): Boolean {
+        searchQuery = newText.orEmpty()
+        applyFilters()
+        return true
+      }
+    })
+    searchItem.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
+      override fun onMenuItemActionExpand(item: MenuItem): Boolean {
+        binding.toolbarTitleTextView.isGone = true
+        return true
+      }
+
+      override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
+        binding.toolbarTitleTextView.isVisible = true
+        searchQuery = ""
+        applyFilters()
+        return true
+      }
+    })
+  }
+
+  private fun appNamesInList(): List<Pair<String, String>> {
+    return allNotifications
+      .filter { it.sourcePackage != null }
+      .groupBy { it.sourcePackage!! }
+      .entries
+      .sortedByDescending { it.value.size }
+      .map { (sourcePackage, items) -> sourcePackage to (items.first().sourceAppName ?: sourcePackage) }
+  }
+
+  private fun showFilterByAppDialog() {
+    val options = mutableListOf<Pair<String?, String>>(null to getString(R.string.filter_all_apps))
+    if (allNotifications.any { it.sourcePackage == null }) {
+      options += NOTES_FILTER to getString(R.string.filter_my_notes)
+    }
+    options += appNamesInList()
+
+    val labels = options.map { it.second }.toTypedArray()
+    val selected = options.indexOfFirst { it.first == appFilter }.coerceAtLeast(0)
+    MaterialAlertDialogBuilder(requireContext())
+      .setTitle(R.string.menu_filter_app)
+      .setSingleChoiceItems(labels, selected) { dialog, which ->
+        setAppFilter(options[which].first, options[which].second)
+        dialog.dismiss()
+      }
+      .show()
+  }
+
+  private fun setAppFilter(filter: String?, name: String?) {
+    appFilter = filter
+    appFilterName = if (filter == null) null else name
+    applyFilters()
+  }
+
+  private fun onNotificationLongClicked(notification: PinnitNotification) {
+    val text = listOfNotNull(notification.title, notification.content).joinToString("\n")
+    val sourcePackage = notification.sourcePackage
+    val appName = notification.sourceAppName ?: sourcePackage
+
+    val actions = mutableListOf<Pair<String, () -> Unit>>(
+      getString(R.string.action_copy) to { copyToClipboard(text) },
+      getString(R.string.action_share) to { share(text) }
+    )
+    if (sourcePackage != null && appName != null) {
+      actions += getString(R.string.action_only_app, appName) to { setAppFilter(sourcePackage, appName) }
+      actions += getString(R.string.action_ignore_app, appName) to { ignoreApp(sourcePackage, appName) }
+    }
+
+    MaterialAlertDialogBuilder(requireContext())
+      .setTitle(notification.title)
+      .setItems(actions.map { it.first }.toTypedArray()) { _, which -> actions[which].second() }
+      .show()
+  }
+
+  private fun copyToClipboard(text: String) {
+    val clipboard = requireContext().getSystemService<ClipboardManager>() ?: return
+    clipboard.setPrimaryClip(ClipData.newPlainText(getString(R.string.app_name), text))
+    showSnackbar(getString(R.string.copied))
+  }
+
+  private fun share(text: String) {
+    val intent = Intent(Intent.ACTION_SEND).apply {
+      type = "text/plain"
+      putExtra(Intent.EXTRA_TEXT, text)
+    }
+    startActivity(Intent.createChooser(intent, null))
+  }
+
+  private fun ignoreApp(sourcePackage: String, appName: String) {
+    historySettings.ignore(sourcePackage)
+    Snackbar.make(binding.notificationsRoot, getString(R.string.app_ignored, appName), Snackbar.LENGTH_LONG)
+      .setAnchorView(binding.bottomBar)
+      .setAction(R.string.undo) {
+        historySettings.ignoredPackages = historySettings.ignoredPackages - sourcePackage
+      }
+      .show()
+  }
+
+  /** Apps seen in the history plus the ones already ignored; ticked = not saved. */
+  private fun showIgnoredAppsDialog() {
+    val ignored = historySettings.ignoredPackages
+    val apps = appNamesInList().toMutableList()
+    val packageManager = requireContext().packageManager
+    ignored.filter { ignoredPackage -> apps.none { it.first == ignoredPackage } }.forEach { ignoredPackage ->
+      val label = try {
+        packageManager.getApplicationLabel(packageManager.getApplicationInfo(ignoredPackage, 0)).toString()
+      } catch (e: PackageManager.NameNotFoundException) {
+        ignoredPackage
+      }
+      apps += ignoredPackage to label
+    }
+    if (apps.isEmpty()) {
+      showSnackbar(getString(R.string.ignored_apps_empty))
+      return
+    }
+    apps.sortWith(compareByDescending<Pair<String, String>> { it.first in ignored }.thenBy { it.second.lowercase() })
+
+    val checked = BooleanArray(apps.size) { apps[it].first in ignored }
+    MaterialAlertDialogBuilder(requireContext())
+      .setTitle(R.string.ignored_apps_title)
+      .setMultiChoiceItems(apps.map { it.second }.toTypedArray(), checked) { _, which, isChecked -> checked[which] = isChecked }
+      .setPositiveButton(android.R.string.ok) { _, _ ->
+        historySettings.ignoredPackages = apps.filterIndexed { index, _ -> checked[index] }.map { it.first }.toSet()
+      }
+      .setNegativeButton(android.R.string.cancel, null)
+      .show()
+  }
+
+  private fun showRetentionDialog() {
+    val choices = HistorySettings.RETENTION_CHOICES
+    val labels = choices.map { days ->
+      when (days) {
+        7 -> getString(R.string.retention_7)
+        30 -> getString(R.string.retention_30)
+        90 -> getString(R.string.retention_90)
+        365 -> getString(R.string.retention_365)
+        else -> getString(R.string.retention_never)
+      }
+    }.toTypedArray()
+    val selected = choices.indexOf(historySettings.historyRetentionDays).coerceAtLeast(0)
+
+    MaterialAlertDialogBuilder(requireContext())
+      .setTitle(R.string.retention_title)
+      .setSingleChoiceItems(labels, selected) { dialog, which ->
+        historySettings.historyRetentionDays = choices[which]
+        dialog.dismiss()
+        showSnackbar(getString(R.string.retention_saved))
+      }
+      .show()
+  }
+
+  private fun showSnackbar(message: String) {
+    Snackbar.make(binding.notificationsRoot, message, Snackbar.LENGTH_SHORT)
+      .setAnchorView(binding.bottomBar)
+      .show()
   }
 
   override fun showNotificationsEmptyError() {
+    binding.noNotificationsTextView.setText(R.string.no_notifications)
     binding.noNotificationsTextView.isVisible = true
     binding.noNotificationsImageView.isVisible = true
   }
@@ -194,6 +426,7 @@ class NotificationsScreen : Fragment(), NotificationsScreenUi {
 
   override fun hideNotifications() {
     binding.notificationsRecyclerView.isGone = true
+    allNotifications = emptyList()
     adapter.submitList(null)
   }
 

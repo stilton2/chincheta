@@ -2,6 +2,7 @@ package dev.sasikanth.pinnit.data
 
 import android.os.Parcelable
 import androidx.annotation.Keep
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Embedded
 import androidx.room.Entity
@@ -37,7 +38,10 @@ data class PinnitNotification(
   val schedule: Schedule? = null,
   // Filled only for entries captured from other apps' notifications (history).
   val sourcePackage: String? = null,
-  val sourceAppName: String? = null
+  val sourceAppName: String? = null,
+  // The sender deleted this message (e.g. WhatsApp "This message was deleted"); we kept the text.
+  @ColumnInfo(defaultValue = "0")
+  val retracted: Boolean = false
 ) : Parcelable {
 
   val isFromHistory: Boolean
@@ -146,5 +150,19 @@ data class PinnitNotification(
       """
     )
     suspend fun moveHistoryToTrash(sourcePackages: List<String>, deletedAt: Instant): Int
+
+    @Query(
+      """
+        SELECT *
+        FROM PinnitNotification
+        WHERE sourcePackage = :sourcePackage AND title = :title AND retracted = 0 AND createdAt >= :since
+        ORDER BY createdAt DESC
+        LIMIT 20
+      """
+    )
+    suspend fun recentFromSourceWithTitle(sourcePackage: String, title: String, since: Instant): List<PinnitNotification>
+
+    @Query("UPDATE PinnitNotification SET retracted = 1 WHERE uuid = :uuid")
+    suspend fun markRetracted(uuid: UUID)
   }
 }

@@ -37,7 +37,8 @@ class NotificationsListAdapter(
   private val onToggleNotificationPinClicked: (PinnitNotification) -> Unit,
   private val onNotificationClicked: (View, PinnitNotification) -> Unit,
   private val onEditNotificationScheduleClicked: (PinnitNotification) -> Unit,
-  private val onRemoveNotificationScheduleClicked: (PinnitNotification) -> Unit
+  private val onRemoveNotificationScheduleClicked: (PinnitNotification) -> Unit,
+  private val onNotificationLongClicked: (PinnitNotification) -> Unit
 ) : ListAdapter<PinnitNotification, RecyclerView.ViewHolder>(NotificationsDiffCallback) {
 
   // Icons of the apps that posted history entries, by package name.
@@ -75,6 +76,12 @@ class NotificationsListAdapter(
 
       itemView.setOnClickListener {
         onNotificationClicked(it, currentList[adapterPosition])
+      }
+
+      itemView.setOnLongClickListener {
+        val position = adapterPosition
+        if (position != RecyclerView.NO_POSITION) onNotificationLongClicked(currentList[position])
+        true
       }
     }
   }
@@ -153,7 +160,12 @@ class NotificationsListAdapter(
         return
       }
 
-      binding.appName.text = notification.sourceAppName ?: sourcePackage
+      val appName = notification.sourceAppName ?: sourcePackage
+      binding.appName.text = if (notification.retracted) {
+        context.getString(R.string.retracted_label, appName)
+      } else {
+        appName
+      }
       val icon = appIconCache.getOrPut(sourcePackage) {
         try {
           context.packageManager.getApplicationIcon(sourcePackage)

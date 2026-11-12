@@ -107,4 +107,30 @@
     <item quantity="one">%d notificación movida a la papelera</item>
     <item quantity="other">%d notificaciones movidas a la papelera</item>
   </plurals>
+  <string name="menu_search">Buscar</string>
+  <string name="menu_filter_app">Filtrar por app…</string>
+  <string name="menu_ignored_apps">Apps ignoradas…</string>
+  <string name="menu_retention">Borrado automático…</string>
+  <string name="filter_all_apps">Todas las apps</string>
+  <string name="filter_my_notes">Mis notas</string>
+  <string name="no_results">Sin resultados</string>
+  <string name="action_copy">Copiar texto</string>
+  <string name="action_share">Compartir</string>
+  <string name="action_only_app">Ver solo %s</string>
+  <string name="action_ignore_app">No guardar más de %s</string>
+  <string name="copied">Copiado</string>
+  <string name="app_ignored">Ya no se guardan las notificaciones de %s</string>
+  <string name="ignored_apps_title">No guardar notificaciones de</string>
+  <string name="ignored_apps_empty">Aún no hay apps en el historial</string>
+  <string name="retention_title">Borrar el historial sin fijar con más de</string>
+  <string name="retention_7">7 días</string>
+  <string name="retention_30">30 días</string>
+  <string name="retention_90">90 días</string>
+  <string name="retention_365">1 año</string>
+  <string name="retention_never">Nunca (guardar siempre)</string>
+  <string name="retention_saved">Guardado</string>
+  <string name="section_pinned">Fijadas</string>
+  <string name="section_today">Hoy</string>
+  <string name="section_yesterday">Ayer</string>
+  <string name="retracted_label">%s · borrado por el remitente</string>
 </resources>

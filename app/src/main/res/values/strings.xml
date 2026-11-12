@@ -107,4 +107,30 @@
     <item quantity="one">%d notification moved to trash</item>
     <item quantity="other">%d notifications moved to trash</item>
   </plurals>
+  <string name="menu_search">Search</string>
+  <string name="menu_filter_app">Filter by app…</string>
+  <string name="menu_ignored_apps">Ignored apps…</string>
+  <string name="menu_retention">Auto-delete…</string>
+  <string name="filter_all_apps">All apps</string>
+  <string name="filter_my_notes">My notes</string>
+  <string name="no_results">No results</string>
+  <string name="action_copy">Copy text</string>
+  <string name="action_share">Share</string>
+  <string name="action_only_app">Show only %s</string>
+  <string name="action_ignore_app">Stop saving %s</string>
+  <string name="copied">Copied</string>
+  <string name="app_ignored">%s notifications won\'t be saved anymore</string>
+  <string name="ignored_apps_title">Don\'t save notifications from</string>
+  <string name="ignored_apps_empty">No apps in the history yet</string>
+  <string name="retention_title">Delete unpinned history older than</string>
+  <string name="retention_7">7 days</string>
+  <string name="retention_30">30 days</string>
+  <string name="retention_90">90 days</string>
+  <string name="retention_365">1 year</string>
+  <string name="retention_never">Never (keep forever)</string>
+  <string name="retention_saved">Saved</string>
+  <string name="section_pinned">Pinned</string>
+  <string name="section_today">Today</string>
+  <string name="section_yesterday">Yesterday</string>
+  <string name="retracted_label">%s · deleted by sender</string>
 </resources>

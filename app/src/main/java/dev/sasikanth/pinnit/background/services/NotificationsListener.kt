@@ -6,6 +6,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import dagger.hilt.android.AndroidEntryPoint
+import dev.sasikanth.pinnit.data.preferences.HistorySettings
 import dev.sasikanth.pinnit.notifications.NotificationRepository
 import dev.sasikanth.pinnit.utils.DispatcherProvider
 import dev.sasikanth.pinnit.utils.notification.SourceAppIcons
@@ -27,12 +28,21 @@ import javax.inject.Inject
 class NotificationsListener : NotificationListenerService() {
 
   companion object {
-    private val HISTORY_RETENTION: Duration = Duration.ofDays(30)
     private val TRASH_RETENTION: Duration = Duration.ofDays(30)
-    private val PURGE_INTERVAL: Duration = Duration.ofHours(12)
+    private val PURGE_INTERVAL: Duration = Duration.ofHours(1)
 
     // Same app posting the same text again within this window is an update, not a new notification.
     private val DUPLICATE_WINDOW: Duration = Duration.ofMinutes(10)
+
+    // WhatsApp replaces a message deleted by its sender with one of these texts.
+    private val RETRACTING_APPS = setOf("com.whatsapp", "com.whatsapp.w4b")
+    private val RETRACTED_PLACEHOLDERS = listOf(
+      "se eliminó este mensaje",
+      "este mensaje fue eliminado",
+      "mensaje eliminado",
+      "this message was deleted"
+    )
+    private val RETRACT_LOOKBACK: Duration = Duration.ofDays(2)
 
     private val IGNORED_CATEGORIES = setOf(
       Notification.CATEGORY_PROGRESS,
@@ -49,6 +59,9 @@ class NotificationsListener : NotificationListenerService() {
 
   @Inject
   lateinit var sourceAppIcons: SourceAppIcons
+
+  @Inject
+  lateinit var historySettings: HistorySettings
 
   private val scope by lazy { CoroutineScope(SupervisorJob() + dispatcherProvider.io) }
 
@@ -75,6 +88,12 @@ class NotificationsListener : NotificationListenerService() {
     scope.launch {
       sourceAppIcons.saveSmallIcon(sourcePackage, smallIcon)
       saveMutex.withLock {
+        if (isRetractedPlaceholder(sourcePackage, content)) {
+          // Don't save the placeholder: mark the original message (which we kept) as deleted by its sender.
+          markRetracted(sourcePackage, title.ifBlank { appName }, content.orEmpty(), postedAt)
+          return@withLock
+        }
+
         val latest = repository.latestFromSource(sourcePackage)
         val isDuplicate = latest != null &&
           latest.equalsTitleAndContent(title.ifBlank { appName }, content) &&
@@ -101,6 +120,7 @@ class NotificationsListener : NotificationListenerService() {
   private fun shouldSave(sbn: StatusBarNotification): Boolean {
     val notification = sbn.notification ?: return false
     if (sbn.packageName == packageName) return false
+    if (historySettings.isIgnored(sbn.packageName)) return false
     if (sbn.isOngoing) return false
     if (notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) return false
     if (notification.category in IGNORED_CATEGORIES) return false
@@ -150,12 +170,34 @@ class NotificationsListener : NotificationListenerService() {
     }
   }
 
+  private fun isRetractedPlaceholder(sourcePackage: String, content: String?): Boolean {
+    if (sourcePackage !in RETRACTING_APPS || content == null) return false
+    val text = content.lowercase().trim().removeSuffix(".")
+    // Group chats prefix the sender: "Ana: Se eliminó este mensaje"
+    val message = text.substringAfter(": ", text)
+    // Allow a leading symbol/emoji before the placeholder text.
+    return RETRACTED_PLACEHOLDERS.any { message.endsWith(it) && message.length <= it.length + 4 }
+  }
+
+  private suspend fun markRetracted(sourcePackage: String, title: String, content: String, postedAt: Instant) {
+    val senderPrefix = if (content.contains(": ")) content.substringBefore(": ") + ": " else null
+    val candidates = repository.recentFromSourceWithTitle(sourcePackage, title, postedAt.minus(RETRACT_LOOKBACK))
+    val original = candidates.firstOrNull { candidate ->
+      val text = candidate.content.orEmpty()
+      !isRetractedPlaceholder(sourcePackage, text) && (senderPrefix == null || text.startsWith(senderPrefix))
+    } ?: return
+    repository.markRetracted(original.uuid)
+  }
+
   private fun purgeOldHistoryIfNeeded() {
     val now = Instant.now()
     if (Duration.between(lastPurge, now) < PURGE_INTERVAL) return
     lastPurge = now
     scope.launch {
-      repository.deleteHistoryOlderThan(now.minus(HISTORY_RETENTION))
+      val retentionDays = historySettings.historyRetentionDays
+      if (retentionDays != HistorySettings.RETENTION_FOREVER) {
+        repository.deleteHistoryOlderThan(now.minus(Duration.ofDays(retentionDays.toLong())))
+      }
       repository.deleteTrashOlderThan(now.minus(TRASH_RETENTION))
     }
   }

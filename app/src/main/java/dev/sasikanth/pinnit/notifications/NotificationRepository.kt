@@ -136,4 +136,9 @@ class NotificationRepository @Inject constructor(
   }
 
   suspend fun undoMoveHistoryToTrash(deletedAt: Instant) = notificationDao.restoreDeletedAt(deletedAt)
+
+  suspend fun recentFromSourceWithTitle(sourcePackage: String, title: String, since: Instant) =
+    notificationDao.recentFromSourceWithTitle(sourcePackage, title, since)
+
+  suspend fun markRetracted(uuid: UUID) = notificationDao.markRetracted(uuid)
 }

@@ -10,7 +10,7 @@ import dev.sasikanth.pinnit.utils.room.UuidRoomTypeConverter
 
 @Database(
   entities = [PinnitNotification::class],
-  version = 3
+  version = 4
 )
 @TypeConverters(
   UuidRoomTypeConverter::class,

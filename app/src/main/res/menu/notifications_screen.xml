@@ -2,11 +2,29 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto">
   <item
+    android:id="@+id/search"
+    android:icon="@drawable/ic_search"
+    android:title="@string/menu_search"
+    app:actionViewClass="androidx.appcompat.widget.SearchView"
+    app:showAsAction="always|collapseActionView" />
+  <item
+    android:id="@+id/filterByApp"
+    android:title="@string/menu_filter_app"
+    app:showAsAction="never" />
+  <item
     android:id="@+id/clearHistory"
     android:title="@string/menu_clear_history"
     app:showAsAction="never" />
   <item
     android:id="@+id/openTrash"
     android:title="@string/menu_trash"
+    app:showAsAction="never" />
+  <item
+    android:id="@+id/ignoredApps"
+    android:title="@string/menu_ignored_apps"
+    app:showAsAction="never" />
+  <item
+    android:id="@+id/retention"
+    android:title="@string/menu_retention"
     app:showAsAction="never" />
 </menu>

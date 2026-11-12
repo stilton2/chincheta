@@ -12,6 +12,7 @@ import dagger.hilt.components.SingletonComponent
 import dev.sasikanth.pinnit.data.AppDatabase
 import dev.sasikanth.pinnit.data.migrations.Migration_1_2
 import dev.sasikanth.pinnit.data.migrations.Migration_2_3
+import dev.sasikanth.pinnit.data.migrations.Migration_3_4
 import dev.sasikanth.pinnit.utils.CoroutineDispatcherProvider
 import dev.sasikanth.pinnit.utils.DispatcherProvider
 import dev.sasikanth.pinnit.utils.RealUserClock
@@ -30,7 +31,7 @@ object AppModule {
     @ApplicationContext context: Context
   ): AppDatabase {
     return Room.databaseBuilder(context, AppDatabase::class.java, "pinnit-db")
-      .addMigrations(Migration_1_2, Migration_2_3)
+      .addMigrations(Migration_1_2, Migration_2_3, Migration_3_4)
       .build()
   }
 
