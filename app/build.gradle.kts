@@ -1,3 +1,4 @@
+import java.util.Properties
 import com.google.protobuf.gradle.GenerateProtoTask
 import org.gradle.kotlin.dsl.support.uppercaseFirstChar
 
@@ -14,12 +15,17 @@ plugins {
 }
 
 android {
+  // Clave propia fuera del repo: ~/.android/pinnit-keystore.properties
+  val keystoreProps = Properties().apply {
+    val f = file("${System.getProperty("user.home")}/.android/pinnit-keystore.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+  }
   signingConfigs {
     create("release") {
-      storeFile = file("$rootDir/release/app-release.jks")
-      storePassword = "${project.properties["PINNIT_KEYSTORE_PASSWORD"]}"
-      keyAlias = "pinnitalias"
-      keyPassword = "${project.properties["PINNIT_KEY_PASSWORD"]}"
+      storeFile = keystoreProps.getProperty("PINNIT_KEYSTORE_FILE")?.let { file(it) }
+      storePassword = keystoreProps.getProperty("PINNIT_KEYSTORE_PASSWORD")
+      keyAlias = keystoreProps.getProperty("PINNIT_KEY_ALIAS")
+      keyPassword = keystoreProps.getProperty("PINNIT_KEY_PASSWORD")
     }
   }
 
