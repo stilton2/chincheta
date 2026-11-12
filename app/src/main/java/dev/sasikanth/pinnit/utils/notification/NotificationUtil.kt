@@ -19,7 +19,7 @@ import androidx.navigation.NavDeepLinkBuilder
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.sasikanth.pinnit.R
 import dev.sasikanth.pinnit.activity.MainActivity
-import dev.sasikanth.pinnit.background.receivers.DeleteNotificationReceiver
+import dev.sasikanth.pinnit.background.receivers.RepostNotificationReceiver
 import dev.sasikanth.pinnit.background.receivers.UnpinNotificationReceiver
 import dev.sasikanth.pinnit.data.PinnitNotification
 import dev.sasikanth.pinnit.editor.EditorScreenArgs
@@ -115,14 +115,15 @@ class NotificationUtil @Inject constructor(
       PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
-    val deleteIntent = Intent(context, DeleteNotificationReceiver::class.java).apply {
-      action = DeleteNotificationReceiver.ACTION_DELETE
-      putExtra(DeleteNotificationReceiver.EXTRA_NOTIFICATION_UUID, notification.uuid.toString())
+    // Fired when the user swipes the notification away: pinned ones come back.
+    val repostIntent = Intent(context, RepostNotificationReceiver::class.java).apply {
+      action = RepostNotificationReceiver.ACTION_REPOST
+      putExtra(RepostNotificationReceiver.EXTRA_NOTIFICATION_UUID, notification.uuid.toString())
     }
-    val deletePendingIntent = PendingIntent.getBroadcast(
+    val repostPendingIntent = PendingIntent.getBroadcast(
       context,
       notification.uuid.hashCode(),
-      deleteIntent,
+      repostIntent,
       PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
@@ -138,8 +139,9 @@ class NotificationUtil @Inject constructor(
         )
       )
       .addAction(Action(R.drawable.ic_pinnit_pin, context.getString(R.string.unpin), unpinPendingIntent))
-      .addAction(Action(R.drawable.ic_pinnit_delete, context.getString(R.string.delete), deletePendingIntent))
+      // No "Delete" action here on purpose: pinned notes can only be deleted from inside the app.
       .setOngoing(true)
+      .setDeleteIntent(repostPendingIntent)
 
     return builder.build()
   }

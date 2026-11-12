@@ -92,6 +92,14 @@
     </receiver>
 
     <receiver
+      android:name=".background.receivers.RepostNotificationReceiver"
+      android:enabled="true"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="dev.sasikanth.pinnit.system.action.RepostNotification" />
+      </intent-filter>
+    </receiver>
+    <receiver
       android:name=".background.receivers.BootCompletedReceiver"
       android:exported="false">
       <intent-filter>
