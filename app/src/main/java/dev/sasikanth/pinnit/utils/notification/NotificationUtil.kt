@@ -23,6 +23,7 @@ import dev.sasikanth.pinnit.background.receivers.RepostNotificationReceiver
 import dev.sasikanth.pinnit.data.PinnitNotification
 import dev.sasikanth.pinnit.editor.EditorScreenArgs
 import dev.sasikanth.pinnit.editor.EditorTransition.SharedAxis
+import dev.sasikanth.pinnit.widget.PinnedWidgetProvider
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -47,10 +48,12 @@ class NotificationUtil @Inject constructor(
     with(notificationManager) {
       notify(pinnitNotification.uuid.hashCode(), notification)
     }
+    PinnedWidgetProvider.refresh(context)
   }
 
   fun dismissNotification(pinnitNotification: PinnitNotification) {
     notificationManager.cancel(pinnitNotification.uuid.hashCode())
+    PinnedWidgetProvider.refresh(context)
   }
 
   /**

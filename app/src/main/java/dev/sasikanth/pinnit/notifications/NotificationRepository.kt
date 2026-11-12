@@ -89,13 +89,14 @@ class NotificationRepository @Inject constructor(
     content: String?,
     sourcePackage: String,
     sourceAppName: String,
-    postedAt: Instant
-  ) {
+    postedAt: Instant,
+    isPinned: Boolean = false
+  ): PinnitNotification {
     val notification = PinnitNotification(
       uuid = UUID.randomUUID(),
       title = title,
       content = content,
-      isPinned = false,
+      isPinned = isPinned,
       createdAt = postedAt,
       updatedAt = postedAt,
       deletedAt = null,
@@ -103,6 +104,7 @@ class NotificationRepository @Inject constructor(
       sourceAppName = sourceAppName
     )
     notificationDao.save(listOf(notification))
+    return notification
   }
 
   suspend fun latestFromSource(sourcePackage: String): PinnitNotification? {
@@ -141,4 +143,6 @@ class NotificationRepository @Inject constructor(
     notificationDao.recentFromSourceWithTitle(sourcePackage, title, since)
 
   suspend fun markRetracted(uuid: UUID) = notificationDao.markRetracted(uuid)
+
+  suspend fun allNotifications(): List<PinnitNotification> = notificationDao.allNotifications()
 }

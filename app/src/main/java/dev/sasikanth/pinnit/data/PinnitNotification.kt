@@ -162,6 +162,9 @@ data class PinnitNotification(
     )
     suspend fun recentFromSourceWithTitle(sourcePackage: String, title: String, since: Instant): List<PinnitNotification>
 
+    @Query("SELECT * FROM PinnitNotification ORDER BY createdAt")
+    suspend fun allNotifications(): List<PinnitNotification>
+
     @Query("UPDATE PinnitNotification SET retracted = 1 WHERE uuid = :uuid")
     suspend fun markRetracted(uuid: UUID)
   }

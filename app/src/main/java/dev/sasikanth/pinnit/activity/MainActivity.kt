@@ -21,6 +21,7 @@ import dev.sasikanth.pinnit.data.preferences.AppPreferences
 import dev.sasikanth.pinnit.databinding.ActivityMainBinding
 import dev.sasikanth.pinnit.oemwarning.OemWarningDialog
 import dev.sasikanth.pinnit.oemwarning.shouldShowWarningForOEM
+import dev.sasikanth.pinnit.utils.AppLock
 import dev.sasikanth.pinnit.utils.DispatcherProvider
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -36,6 +37,9 @@ class MainActivity : AppCompatActivity() {
 
   @Inject
   lateinit var dispatcherProvider: DispatcherProvider
+
+  @Inject
+  lateinit var appLock: AppLock
 
   private var navController: NavController? = null
 
@@ -62,6 +66,11 @@ class MainActivity : AppCompatActivity() {
         showOemWarningDialog(isOemWarningDialogShown)
       }
     }
+  }
+
+  override fun onStart() {
+    super.onStart()
+    appLock.guard(this, binding.mainRoot)
   }
 
   override fun onResume() {

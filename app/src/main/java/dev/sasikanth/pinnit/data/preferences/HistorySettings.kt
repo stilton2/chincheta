@@ -19,6 +19,8 @@ class HistorySettings @Inject constructor(
     private const val PREFS_NAME = "history_settings"
     private const val KEY_IGNORED_PACKAGES = "ignored_packages"
     private const val KEY_RETENTION_DAYS = "history_retention_days"
+    private const val KEY_AUTO_PIN_RULES = "auto_pin_rules"
+    private const val KEY_APP_LOCK = "app_lock_enabled"
 
     const val RETENTION_FOREVER = 0
     const val DEFAULT_RETENTION_DAYS = 30
@@ -37,6 +39,19 @@ class HistorySettings @Inject constructor(
   fun ignore(sourcePackage: String) {
     ignoredPackages = ignoredPackages + sourcePackage
   }
+
+  /**
+   * Words or names: a new notification whose title or text contains one of them is pinned
+   * automatically (case and accent insensitive).
+   */
+  var autoPinRules: Set<String>
+    get() = prefs.getStringSet(KEY_AUTO_PIN_RULES, emptySet()).orEmpty().toSet()
+    set(value) = prefs.edit { putStringSet(KEY_AUTO_PIN_RULES, value.toSet()) }
+
+  /** Ask for fingerprint / screen lock when opening the app. */
+  var appLockEnabled: Boolean
+    get() = prefs.getBoolean(KEY_APP_LOCK, false)
+    set(value) = prefs.edit { putBoolean(KEY_APP_LOCK, value) }
 
   /** Days unpinned history is kept; [RETENTION_FOREVER] keeps it forever. */
   var historyRetentionDays: Int

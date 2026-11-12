@@ -9,6 +9,7 @@ import androidx.datastore.core.DataStore
 import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
 import dev.sasikanth.pinnit.data.preferences.AppPreferences
+import dev.sasikanth.pinnit.utils.AppLock
 import dev.sasikanth.pinnit.utils.DispatcherProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
@@ -28,6 +29,9 @@ class PinnitApp : Application(), Configuration.Provider {
 
   @Inject
   lateinit var dispatcherProvider: DispatcherProvider
+
+  @Inject
+  lateinit var appLock: AppLock
 
   private val mainScope by lazy {
     CoroutineScope(dispatcherProvider.main)
@@ -56,6 +60,7 @@ class PinnitApp : Application(), Configuration.Provider {
     }
 
     super.onCreate()
+    appLock.register(this)
 
     appPreferencesStore
       .data

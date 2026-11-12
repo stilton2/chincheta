@@ -12,7 +12,13 @@ import androidx.appcompat.widget.SearchView
 import androidx.core.content.getSystemService
 import dev.sasikanth.pinnit.data.preferences.HistorySettings
 import dev.sasikanth.pinnit.notifications.adapter.DayHeaderDecoration
-import java.text.Normalizer
+import android.net.Uri
+import android.widget.FrameLayout
+import com.google.android.material.textfield.TextInputEditText
+import dev.sasikanth.pinnit.data.backup.HistoryBackup
+import dev.sasikanth.pinnit.utils.AppLock
+import dev.sasikanth.pinnit.utils.normalizedForSearch
+import java.time.LocalDate
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -59,7 +65,6 @@ class NotificationsScreen : Fragment(), NotificationsScreenUi {
 
   companion object {
     private const val NOTES_FILTER = ""
-    private val DIACRITICS = Regex("\\p{Mn}+")
   }
 
   @Inject
@@ -79,6 +84,18 @@ class NotificationsScreen : Fragment(), NotificationsScreenUi {
 
   @Inject
   lateinit var historySettings: HistorySettings
+
+  @Inject
+  lateinit var historyBackup: HistoryBackup
+
+  @Inject
+  lateinit var appLock: AppLock
+
+  private val exportBackupLauncher =
+    registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let(::exportBackup) }
+
+  private val importBackupLauncher =
+    registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(::importBackup) }
 
   // Everything the screen model gives us; the adapter gets this list after search and app filter.
   private var allNotifications: List<PinnitNotification> = emptyList()
@@ -135,9 +152,13 @@ class NotificationsScreen : Fragment(), NotificationsScreenUi {
         R.id.openTrash -> startActivity(TrashActivity.intent(requireContext()))
         R.id.ignoredApps -> showIgnoredAppsDialog()
         R.id.retention -> showRetentionDialog()
+        R.id.autoPin -> showAutoPinDialog()
+        R.id.backup -> showBackupDialog()
+        R.id.appLock -> toggleAppLock(item)
       }
       true
     }
+    binding.toolbar.menu.findItem(R.id.appLock).isChecked = historySettings.appLockEnabled
     setUpSearch(binding.toolbar.menu.findItem(R.id.search))
 
     adapter = NotificationsListAdapter(
@@ -242,9 +263,6 @@ class NotificationsScreen : Fragment(), NotificationsScreenUi {
     }
     binding.toolbarTitleTextView.text = appFilterName ?: getString(R.string.toolbar_title_notifications)
   }
-
-  private fun String.normalizedForSearch(): String =
-    Normalizer.normalize(this, Normalizer.Form.NFD).replace(DIACRITICS, "").lowercase().trim()
 
   private fun setUpSearch(searchItem: MenuItem) {
     val searchView = searchItem.actionView as SearchView
@@ -405,6 +423,114 @@ class NotificationsScreen : Fragment(), NotificationsScreenUi {
         showSnackbar(getString(R.string.retention_saved))
       }
       .show()
+  }
+
+  /** Words or names that pin a new notification automatically. Tap one to remove it. */
+  private fun showAutoPinDialog() {
+    val rules = historySettings.autoPinRules.sortedBy { it.lowercase() }
+    val builder = MaterialAlertDialogBuilder(requireContext())
+      .setTitle(R.string.auto_pin_title)
+      .setPositiveButton(R.string.auto_pin_add) { _, _ -> showAddAutoPinRuleDialog() }
+      .setNegativeButton(R.string.close, null)
+    if (rules.isEmpty()) {
+      builder.setMessage(R.string.auto_pin_explanation)
+    } else {
+      builder.setItems(rules.toTypedArray()) { _, which -> confirmRemoveAutoPinRule(rules[which]) }
+    }
+    builder.show()
+  }
+
+  private fun showAddAutoPinRuleDialog() {
+    val context = requireContext()
+    val input = TextInputEditText(context).apply {
+      hint = getString(R.string.auto_pin_hint)
+      isSingleLine = true
+    }
+    val padding = (20 * resources.displayMetrics.density).toInt()
+    val container = FrameLayout(context).apply {
+      setPadding(padding, padding / 2, padding, 0)
+      addView(input)
+    }
+    MaterialAlertDialogBuilder(context)
+      .setTitle(R.string.auto_pin_add)
+      .setMessage(R.string.auto_pin_explanation)
+      .setView(container)
+      .setPositiveButton(android.R.string.ok) { _, _ ->
+        val rule = input.text?.toString()?.trim().orEmpty()
+        if (rule.isNotEmpty()) {
+          historySettings.autoPinRules = historySettings.autoPinRules + rule
+          showSnackbar(getString(R.string.auto_pin_added, rule))
+        }
+      }
+      .setNegativeButton(android.R.string.cancel, null)
+      .show()
+  }
+
+  private fun confirmRemoveAutoPinRule(rule: String) {
+    MaterialAlertDialogBuilder(requireContext())
+      .setTitle(rule)
+      .setMessage(R.string.auto_pin_remove_confirm)
+      .setPositiveButton(R.string.delete) { _, _ ->
+        historySettings.autoPinRules = historySettings.autoPinRules - rule
+      }
+      .setNegativeButton(android.R.string.cancel, null)
+      .show()
+  }
+
+  private fun showBackupDialog() {
+    val options = arrayOf(getString(R.string.backup_export), getString(R.string.backup_import))
+    MaterialAlertDialogBuilder(requireContext())
+      .setTitle(R.string.menu_backup)
+      .setItems(options) { _, which ->
+        when (which) {
+          0 -> exportBackupLauncher.launch("pinnit-copia-${LocalDate.now()}.json")
+          1 -> importBackupLauncher.launch(arrayOf("application/json", "application/octet-stream", "text/plain"))
+        }
+      }
+      .show()
+  }
+
+  private fun exportBackup(uri: Uri) {
+    val resolver = requireContext().contentResolver
+    viewLifecycleOwner.lifecycleScope.launch {
+      val result = withContext(dispatcherProvider.io) {
+        runCatching { resolver.openOutputStream(uri)!!.use { historyBackup.export(it) } }
+      }
+      showSnackbar(
+        result.fold(
+          onSuccess = { getString(R.string.backup_exported, it) },
+          onFailure = { getString(R.string.backup_failed) }
+        )
+      )
+    }
+  }
+
+  private fun importBackup(uri: Uri) {
+    val resolver = requireContext().contentResolver
+    viewLifecycleOwner.lifecycleScope.launch {
+      val result = withContext(dispatcherProvider.io) {
+        runCatching { resolver.openInputStream(uri)!!.use { historyBackup.import(it) } }
+      }
+      showSnackbar(
+        result.fold(
+          onSuccess = { getString(R.string.backup_imported, it) },
+          onFailure = { getString(R.string.backup_invalid) }
+        )
+      )
+    }
+  }
+
+  private fun toggleAppLock(item: MenuItem) {
+    val enable = !historySettings.appLockEnabled
+    if (enable && !appLock.isAvailable(requireContext())) {
+      showSnackbar(getString(R.string.app_lock_unavailable))
+      return
+    }
+    appLock.confirm(this) {
+      historySettings.appLockEnabled = enable
+      item.isChecked = enable
+      showSnackbar(getString(if (enable) R.string.app_lock_on else R.string.app_lock_off))
+    }
   }
 
   private fun showSnackbar(message: String) {

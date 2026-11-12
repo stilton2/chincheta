@@ -154,6 +154,7 @@ dependencies {
   ksp(libs.androidx.room.compiler)
   implementation(libs.bundles.androidx.lifecycle)
   implementation(libs.androidx.work)
+  implementation(libs.androidx.biometric)
   implementation(libs.material)
   debugImplementation(libs.leakcanary)
   implementation(libs.bundles.coroutines)

@@ -9,6 +9,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.sasikanth.pinnit.data.preferences.HistorySettings
 import dev.sasikanth.pinnit.notifications.NotificationRepository
 import dev.sasikanth.pinnit.utils.DispatcherProvider
+import dev.sasikanth.pinnit.utils.normalizedForSearch
+import dev.sasikanth.pinnit.utils.notification.NotificationUtil
 import dev.sasikanth.pinnit.utils.notification.SourceAppIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -63,6 +65,9 @@ class NotificationsListener : NotificationListenerService() {
   @Inject
   lateinit var historySettings: HistorySettings
 
+  @Inject
+  lateinit var notificationUtil: NotificationUtil
+
   private val scope by lazy { CoroutineScope(SupervisorJob() + dispatcherProvider.io) }
 
   // Serialises saves so the duplicate check sees the previous insert.
@@ -100,13 +105,17 @@ class NotificationsListener : NotificationListenerService() {
           Duration.between(latest.createdAt, postedAt).abs() < DUPLICATE_WINDOW
         if (isDuplicate) return@withLock
 
-        repository.saveFromHistory(
+        val saved = repository.saveFromHistory(
           title = title.ifBlank { appName },
           content = content,
           sourcePackage = sourcePackage,
           sourceAppName = appName,
-          postedAt = postedAt
+          postedAt = postedAt,
+          isPinned = matchesAutoPinRule(title, content)
         )
+        if (saved.isPinned) {
+          notificationUtil.showNotification(saved)
+        }
       }
       purgeOldHistoryIfNeeded()
     }
@@ -168,6 +177,13 @@ class NotificationsListener : NotificationListenerService() {
     } catch (e: PackageManager.NameNotFoundException) {
       sourcePackage
     }
+  }
+
+  private fun matchesAutoPinRule(title: String, content: String?): Boolean {
+    val rules = historySettings.autoPinRules.map { it.normalizedForSearch() }.filter { it.isNotEmpty() }
+    if (rules.isEmpty()) return false
+    val text = "$title\n${content.orEmpty()}".normalizedForSearch()
+    return rules.any { text.contains(it) }
   }
 
   private fun isRetractedPlaceholder(sourcePackage: String, content: String?): Boolean {

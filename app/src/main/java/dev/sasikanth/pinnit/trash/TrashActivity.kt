@@ -21,6 +21,7 @@ import dev.sasikanth.pinnit.data.PinnitNotification
 import dev.sasikanth.pinnit.databinding.ActivityTrashBinding
 import dev.sasikanth.pinnit.databinding.TrashListItemBinding
 import dev.sasikanth.pinnit.notifications.NotificationRepository
+import dev.sasikanth.pinnit.utils.AppLock
 import dev.sasikanth.pinnit.utils.DispatcherProvider
 import dev.sasikanth.pinnit.utils.notification.NotificationUtil
 import kotlinx.coroutines.launch
@@ -46,6 +47,9 @@ class TrashActivity : AppCompatActivity() {
 
   @Inject
   lateinit var dispatcherProvider: DispatcherProvider
+
+  @Inject
+  lateinit var appLock: AppLock
 
   private lateinit var binding: ActivityTrashBinding
 
@@ -74,6 +78,11 @@ class TrashActivity : AppCompatActivity() {
         }
       }
     }
+  }
+
+  override fun onStart() {
+    super.onStart()
+    appLock.guard(this, binding.root)
   }
 
   private fun onItemClicked(notification: PinnitNotification) {

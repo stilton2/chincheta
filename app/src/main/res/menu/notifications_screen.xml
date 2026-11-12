@@ -24,6 +24,19 @@
     android:title="@string/menu_ignored_apps"
     app:showAsAction="never" />
   <item
+    android:id="@+id/autoPin"
+    android:title="@string/menu_auto_pin"
+    app:showAsAction="never" />
+  <item
+    android:id="@+id/backup"
+    android:title="@string/menu_backup"
+    app:showAsAction="never" />
+  <item
+    android:id="@+id/appLock"
+    android:checkable="true"
+    android:title="@string/menu_app_lock"
+    app:showAsAction="never" />
+  <item
     android:id="@+id/retention"
     android:title="@string/menu_retention"
     app:showAsAction="never" />
