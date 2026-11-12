@@ -1,5 +1,6 @@
 package dev.sasikanth.pinnit.notifications
 
+import dev.sasikanth.pinnit.data.HistoryApp
 import dev.sasikanth.pinnit.data.PinnitNotification
 import dev.sasikanth.pinnit.data.Schedule
 import dev.sasikanth.pinnit.utils.UtcClock
@@ -111,4 +112,28 @@ class NotificationRepository @Inject constructor(
   suspend fun deleteHistoryOlderThan(before: Instant) {
     notificationDao.deleteHistoryOlderThan(before)
   }
+
+  fun deletedNotifications(): Flow<List<PinnitNotification>> = notificationDao.deletedNotifications()
+
+  suspend fun restore(uuid: UUID) = notificationDao.restore(uuid)
+
+  suspend fun deleteForever(uuid: UUID) = notificationDao.deleteForever(uuid)
+
+  suspend fun emptyTrash() = notificationDao.emptyTrash()
+
+  suspend fun deleteTrashOlderThan(before: Instant) = notificationDao.deleteTrashOlderThan(before)
+
+  suspend fun historyApps(): List<HistoryApp> = notificationDao.historyApps()
+
+  /**
+   * Moves the unpinned history of these apps to the trash. Returns how many were moved and the
+   * deletion time, which [undoMoveHistoryToTrash] uses to bring exactly those back.
+   */
+  suspend fun moveHistoryToTrash(sourcePackages: List<String>): Pair<Int, Instant> {
+    val now = Instant.now(utcClock)
+    val count = notificationDao.moveHistoryToTrash(sourcePackages, now)
+    return count to now
+  }
+
+  suspend fun undoMoveHistoryToTrash(deletedAt: Instant) = notificationDao.restoreDeletedAt(deletedAt)
 }

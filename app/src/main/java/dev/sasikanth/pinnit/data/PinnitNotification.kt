@@ -15,6 +15,13 @@ import kotlinx.parcelize.Parcelize
 import java.time.Instant
 import java.util.UUID
 
+/** An app with unpinned notifications in the history, for "clear history". */
+data class HistoryApp(
+  val sourcePackage: String,
+  val sourceAppName: String?,
+  val count: Int
+)
+
 @Keep
 @Entity
 @Parcelize
@@ -95,5 +102,49 @@ data class PinnitNotification(
       """
     )
     suspend fun deleteHistoryOlderThan(before: Instant)
+
+    @Query(
+      """
+        SELECT *
+        FROM PinnitNotification
+        WHERE deletedAt IS NOT NULL
+        ORDER BY deletedAt DESC
+      """
+    )
+    fun deletedNotifications(): Flow<List<PinnitNotification>>
+
+    @Query("UPDATE PinnitNotification SET deletedAt = NULL WHERE uuid = :uuid")
+    suspend fun restore(uuid: UUID)
+
+    @Query("UPDATE PinnitNotification SET deletedAt = NULL WHERE deletedAt = :deletedAt")
+    suspend fun restoreDeletedAt(deletedAt: Instant)
+
+    @Query("DELETE FROM PinnitNotification WHERE uuid = :uuid AND deletedAt IS NOT NULL")
+    suspend fun deleteForever(uuid: UUID)
+
+    @Query("DELETE FROM PinnitNotification WHERE deletedAt IS NOT NULL")
+    suspend fun emptyTrash()
+
+    @Query("DELETE FROM PinnitNotification WHERE deletedAt IS NOT NULL AND deletedAt < :before")
+    suspend fun deleteTrashOlderThan(before: Instant)
+
+    @Query(
+      """
+        SELECT sourcePackage, MAX(sourceAppName) AS sourceAppName, COUNT(*) AS count
+        FROM PinnitNotification
+        WHERE sourcePackage IS NOT NULL AND isPinned = 0 AND deletedAt IS NULL
+        GROUP BY sourcePackage
+        ORDER BY count DESC
+      """
+    )
+    suspend fun historyApps(): List<HistoryApp>
+
+    @Query(
+      """
+        UPDATE PinnitNotification SET deletedAt = :deletedAt
+        WHERE sourcePackage IN (:sourcePackages) AND isPinned = 0 AND deletedAt IS NULL
+      """
+    )
+    suspend fun moveHistoryToTrash(sourcePackages: List<String>, deletedAt: Instant): Int
   }
 }

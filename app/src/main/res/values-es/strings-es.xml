@@ -90,4 +90,21 @@
   <string name="listener_access_message">Pinnit necesita acceso a las notificaciones para guardar las que te llegan. Activa Pinnit en la siguiente pantalla.</string>
   <string name="listener_access_open_settings">Abrir ajustes</string>
   <string name="listener_access_later">Más tarde</string>
+  <string name="menu_clear_history">Borrar historial…</string>
+  <string name="menu_trash">Papelera</string>
+  <string name="clear_history_title">Borrar historial</string>
+  <string name="clear_history_confirm">Mover a la papelera</string>
+  <string name="clear_history_empty">El historial está vacío</string>
+  <string name="trash_title">Papelera</string>
+  <string name="trash_empty">La papelera está vacía</string>
+  <string name="trash_empty_action">Vaciar papelera</string>
+  <string name="trash_empty_confirm">¿Borrar para siempre todo lo que hay en la papelera?</string>
+  <string name="trash_restore">Restaurar</string>
+  <string name="trash_delete_forever">Borrar para siempre</string>
+  <string name="trash_info">Lo que lleve aquí más de 30 días se borra solo. Toca una para restaurarla.</string>
+  <string name="trash_item_meta">%1$s · borrada %2$s</string>
+  <plurals name="clear_history_done">
+    <item quantity="one">%d notificación movida a la papelera</item>
+    <item quantity="other">%d notificaciones movidas a la papelera</item>
+  </plurals>
 </resources>

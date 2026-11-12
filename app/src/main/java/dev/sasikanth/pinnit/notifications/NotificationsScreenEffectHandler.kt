@@ -101,6 +101,8 @@ class NotificationsScreenEffectHandler @AssistedInject constructor(
   private suspend fun deleteNotification(effect: DeleteNotification, dispatchEvent: (NotificationsScreenEvent) -> Unit) {
     withContext(dispatcherProvider.io) {
       val deletedNotification = notificationRepository.deleteNotification(effect.notification)
+      // Pinned notes have no actions in the tray anymore, so deleting in the app must remove it there too.
+      notificationUtil.dismissNotification(deletedNotification)
       dispatchEvent(NotificationDeleted(deletedNotification))
     }
   }
@@ -115,6 +117,9 @@ class NotificationsScreenEffectHandler @AssistedInject constructor(
     withContext(dispatcherProvider.io) {
       val notification = notificationRepository.notification(effect.notificationUuid)
       notificationRepository.undoNotificationDelete(notification)
+      if (notification.isPinned) {
+        notificationUtil.showNotification(notification)
+      }
 
       dispatchEvent(RestoredDeletedNotification(notification))
     }

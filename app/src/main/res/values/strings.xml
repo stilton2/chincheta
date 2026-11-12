@@ -90,4 +90,21 @@
   <string name="listener_access_message">Pinnit needs notification access to save the notifications you receive. Enable Pinnit in the next screen.</string>
   <string name="listener_access_open_settings">Open settings</string>
   <string name="listener_access_later">Later</string>
+  <string name="menu_clear_history">Clear history…</string>
+  <string name="menu_trash">Trash</string>
+  <string name="clear_history_title">Clear history</string>
+  <string name="clear_history_confirm">Move to trash</string>
+  <string name="clear_history_empty">History is empty</string>
+  <string name="trash_title">Trash</string>
+  <string name="trash_empty">Trash is empty</string>
+  <string name="trash_empty_action">Empty trash</string>
+  <string name="trash_empty_confirm">Delete everything in the trash forever?</string>
+  <string name="trash_restore">Restore</string>
+  <string name="trash_delete_forever">Delete forever</string>
+  <string name="trash_info">Items here are deleted forever after 30 days. Tap one to restore it.</string>
+  <string name="trash_item_meta">%1$s · deleted %2$s</string>
+  <plurals name="clear_history_done">
+    <item quantity="one">%d notification moved to trash</item>
+    <item quantity="other">%d notifications moved to trash</item>
+  </plurals>
 </resources>

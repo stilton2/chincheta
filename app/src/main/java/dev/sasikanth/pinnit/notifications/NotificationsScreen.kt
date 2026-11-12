@@ -12,6 +12,12 @@ import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import dev.sasikanth.pinnit.trash.TrashActivity
+import dev.sasikanth.pinnit.utils.DispatcherProvider
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.navigation.Navigator
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
@@ -49,6 +55,12 @@ class NotificationsScreen : Fragment(), NotificationsScreenUi {
 
   @Inject
   lateinit var effectHandler: NotificationsScreenEffectHandler.Factory
+
+  @Inject
+  lateinit var notificationRepository: NotificationRepository
+
+  @Inject
+  lateinit var dispatcherProvider: DispatcherProvider
 
   @Inject
   @DateTimeFormat(DateTimeFormat.Type.ScheduleDateFormat)
@@ -89,6 +101,14 @@ class NotificationsScreen : Fragment(), NotificationsScreenUi {
     postponeEnterTransition()
 
     binding.toolbar.applySystemWindowInsetsToPadding(top = true, left = true, right = true)
+    binding.toolbar.inflateMenu(R.menu.notifications_screen)
+    binding.toolbar.setOnMenuItemClickListener { item ->
+      when (item.itemId) {
+        R.id.clearHistory -> showClearHistoryDialog()
+        R.id.openTrash -> startActivity(TrashActivity.intent(requireContext()))
+      }
+      true
+    }
 
     adapter = NotificationsListAdapter(
       utcClock = utcClock,
@@ -238,6 +258,52 @@ class NotificationsScreen : Fragment(), NotificationsScreenUi {
       }
       exitTransition = forward
       findNavController().navigate(navDirections)
+    }
+  }
+
+  /**
+   * Lists the apps with unpinned history, all ticked. Untick the ones to keep;
+   * the rest goes to the trash (with undo). Pinned notifications are never touched.
+   */
+  private fun showClearHistoryDialog() {
+    viewLifecycleOwner.lifecycleScope.launch {
+      val apps = withContext(dispatcherProvider.io) { notificationRepository.historyApps() }
+      if (apps.isEmpty()) {
+        Snackbar.make(binding.notificationsRoot, R.string.clear_history_empty, Snackbar.LENGTH_SHORT)
+          .setAnchorView(binding.bottomBar)
+          .show()
+        return@launch
+      }
+
+      val labels = apps.map { "${it.sourceAppName ?: it.sourcePackage} (${it.count})" }.toTypedArray()
+      val checked = BooleanArray(apps.size) { true }
+
+      MaterialAlertDialogBuilder(requireContext())
+        .setTitle(R.string.clear_history_title)
+        .setMultiChoiceItems(labels, checked) { _, which, isChecked -> checked[which] = isChecked }
+        .setPositiveButton(R.string.clear_history_confirm) { _, _ ->
+          val packages = apps.filterIndexed { index, _ -> checked[index] }.map { it.sourcePackage }
+          if (packages.isNotEmpty()) moveHistoryToTrash(packages)
+        }
+        .setNegativeButton(android.R.string.cancel, null)
+        .show()
+    }
+  }
+
+  private fun moveHistoryToTrash(packages: List<String>) {
+    viewLifecycleOwner.lifecycleScope.launch {
+      val (count, deletedAt) = withContext(dispatcherProvider.io) {
+        notificationRepository.moveHistoryToTrash(packages)
+      }
+      val message = resources.getQuantityString(R.plurals.clear_history_done, count, count)
+      Snackbar.make(binding.notificationsRoot, message, Snackbar.LENGTH_LONG)
+        .setAnchorView(binding.bottomBar)
+        .setAction(R.string.undo) {
+          viewLifecycleOwner.lifecycleScope.launch(dispatcherProvider.io) {
+            notificationRepository.undoMoveHistoryToTrash(deletedAt)
+          }
+        }
+        .show()
     }
   }
 

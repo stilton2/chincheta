@@ -28,6 +28,7 @@ class NotificationsListener : NotificationListenerService() {
 
   companion object {
     private val HISTORY_RETENTION: Duration = Duration.ofDays(30)
+    private val TRASH_RETENTION: Duration = Duration.ofDays(30)
     private val PURGE_INTERVAL: Duration = Duration.ofHours(12)
 
     // Same app posting the same text again within this window is an update, not a new notification.
@@ -155,6 +156,7 @@ class NotificationsListener : NotificationListenerService() {
     lastPurge = now
     scope.launch {
       repository.deleteHistoryOlderThan(now.minus(HISTORY_RETENTION))
+      repository.deleteTrashOlderThan(now.minus(TRASH_RETENTION))
     }
   }
 }
