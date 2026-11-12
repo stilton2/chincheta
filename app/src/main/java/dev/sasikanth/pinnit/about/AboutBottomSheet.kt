@@ -20,7 +20,8 @@ class AboutBottomSheet : BottomSheetDialogFragment() {
 
   companion object {
     private const val TAG = "ABOUT_BOTTOM_SHEET"
-    private const val PINNIT_PROJECT_URL = "https://github.com/msasikanth/pinnit"
+    private const val PROJECT_URL = "https://github.com/stilton2/chincheta"
+    private const val ORIGINAL_PINNIT_URL = "https://github.com/msasikanth/pinnit"
 
     fun show(fragmentManager: FragmentManager) {
       AboutBottomSheet().show(fragmentManager, TAG)
@@ -41,7 +42,8 @@ class AboutBottomSheet : BottomSheetDialogFragment() {
     setAppVersion()
 
     //    binding.contactSupportButton.setOnClickListener { sendSupportEmail() }
-    binding.sourceCodeButton.setOnClickListener { openGitHubProject() }
+    binding.sourceCodeButton.setOnClickListener { openUrl(PROJECT_URL) }
+    binding.basedOnPinnitTextView.setOnClickListener { openUrl(ORIGINAL_PINNIT_URL) }
 
     setupShowOemWarning()
   }
@@ -68,8 +70,8 @@ class AboutBottomSheet : BottomSheetDialogFragment() {
     binding.appVersionTextView.text = getString(R.string.app_version, versionName)
   }
 
-  private fun openGitHubProject() {
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(PINNIT_PROJECT_URL))
+  private fun openUrl(url: String) {
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
     startActivity(intent)
   }
 }

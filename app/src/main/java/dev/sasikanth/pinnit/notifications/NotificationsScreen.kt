@@ -483,7 +483,7 @@ class NotificationsScreen : Fragment(), NotificationsScreenUi {
       .setTitle(R.string.menu_backup)
       .setItems(options) { _, which ->
         when (which) {
-          0 -> exportBackupLauncher.launch("pinnit-copia-${LocalDate.now()}.json")
+          0 -> exportBackupLauncher.launch("chincheta-copia-${LocalDate.now()}.json")
           1 -> importBackupLauncher.launch(arrayOf("application/json", "application/octet-stream", "text/plain"))
         }
       }

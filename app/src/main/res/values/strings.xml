@@ -1,5 +1,5 @@
 <resources>
-  <string name="app_name" translatable="false">Pinnit</string>
+  <string name="app_name" translatable="false">Chincheta</string>
   <string name="app_version">VERSION %1$s</string>
 
   <string name="toolbar_title_notifications">Notifications</string>
@@ -50,7 +50,7 @@
   <string name="contact_support">Contact support</string>
   <string name="source_code" translatable="false">Source code</string>
   <string name="warning_about_oem">Warning about your device</string>
-  <string name="support_subject" translatable="false">Pinnit support : %1$s</string>
+  <string name="support_subject" translatable="false">Chincheta support : %1$s</string>
   <string name="support_content" translatable="false">-- Device Information --\n
     Manufacturer: %1$s\n
     Model: %2$s\n
@@ -81,13 +81,13 @@
   <!-- OEM Warning Dialog -->
   <string name="oem_warning_title">Warning regarding your device’s manufacturer</string>
   <string name="oem_warning_subtitle">
-    Some manufacturers are known for aggressively closing apps in the background. While Pinnit does not run in the background, if the app is forceably shut down, Pinnit notifications will be dismissed from your panel and will only return once the app is launched again.
+    Some manufacturers are known for aggressively closing apps in the background. While Chincheta does not run in the background, if the app is forceably shut down, Chincheta notifications will be dismissed from your panel and will only return once the app is launched again.
     \n
     \nTo avoid this, visit the link below and follow the instructions.
   </string>
   <string name="oem_warning_show_instructions">show instructions</string>
   <string name="listener_access_title">Notification history</string>
-  <string name="listener_access_message">Pinnit needs notification access to save the notifications you receive. Enable Pinnit in the next screen.</string>
+  <string name="listener_access_message">Chincheta needs notification access to save the notifications you receive. Enable Chincheta in the next screen.</string>
   <string name="listener_access_open_settings">Open settings</string>
   <string name="listener_access_later">Later</string>
   <string name="menu_clear_history">Clear history…</string>
@@ -148,7 +148,7 @@
   <string name="backup_exported">Backup saved (%d notifications)</string>
   <string name="backup_imported">Backup restored (%d notifications)</string>
   <string name="backup_failed">Couldn\'t save the backup</string>
-  <string name="backup_invalid">That file is not a Pinnit backup</string>
+  <string name="backup_invalid">That file is not a Chincheta backup</string>
   <string name="app_lock_prompt_subtitle">Unlock to see your notifications</string>
   <string name="app_lock_confirm_subtitle">Confirm it\'s you</string>
   <string name="app_lock_unavailable">Set up a fingerprint or screen lock in the phone settings first</string>
@@ -158,4 +158,5 @@
   <string name="widget_empty">Nothing pinned</string>
   <string name="widget_description">Your pinned notifications</string>
   <string name="trash_just_now">just now</string>
+  <string name="based_on_pinnit">Based on Pinnit by Sasikanth Miriyampalli (Apache 2.0)</string>
 </resources>

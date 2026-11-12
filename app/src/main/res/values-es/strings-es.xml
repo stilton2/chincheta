@@ -1,5 +1,5 @@
 <resources>
-  <string name="app_name" translatable="false">Pinnit</string>
+  <string name="app_name" translatable="false">Chincheta</string>
   <string name="app_version">VERSIÓN %1$s</string>
 
   <string name="toolbar_title_notifications">Notificaciones</string>
@@ -50,7 +50,7 @@
   <string name="contact_support">Contactar asistencia</string>
   <string name="source_code" translatable="false">Código fuente</string>
   <string name="warning_about_oem">Advertencia sobre tu dispositivo</string>
-  <string name="support_subject" translatable="false">Soporte de Pinnit : %1$s</string>
+  <string name="support_subject" translatable="false">Soporte de Chincheta : %1$s</string>
   <string name="support_content" translatable="false">-- Información sobre el dispositivo --\n
     Fabricante: %1$s\n
     Modelo: %2$s\n
@@ -81,13 +81,13 @@
   <!-- OEM Warning Dialog -->
   <string name="oem_warning_title">Advertencia sobre el fabricante de su dispositivo</string>
   <string name="oem_warning_subtitle">
-    Algunos fabricantes son conocidos por cerrar agresivamente las aplicaciones en segundo plano. Aunque Pinnit no se ejecuta en segundo plano, si la aplicación se cierra a la fuerza, las notificaciones de Pinnit se eliminarán del panel y solo volverán a aparecer cuando se inicie la aplicación de nuevo.
+    Algunos fabricantes son conocidos por cerrar agresivamente las aplicaciones en segundo plano. Aunque Chincheta no se ejecuta en segundo plano, si la aplicación se cierra a la fuerza, las notificaciones de Chincheta se eliminarán del panel y solo volverán a aparecer cuando se inicie la aplicación de nuevo.
     \n
     \nPara evitarlo, visite el siguiente enlace y siga las instrucciones.
   </string>
   <string name="oem_warning_show_instructions">Mostrar instrucciones</string>
   <string name="listener_access_title">Historial de notificaciones</string>
-  <string name="listener_access_message">Pinnit necesita acceso a las notificaciones para guardar las que te llegan. Activa Pinnit en la siguiente pantalla.</string>
+  <string name="listener_access_message">Chincheta necesita acceso a las notificaciones para guardar las que te llegan. Activa Chincheta en la siguiente pantalla.</string>
   <string name="listener_access_open_settings">Abrir ajustes</string>
   <string name="listener_access_later">Más tarde</string>
   <string name="menu_clear_history">Borrar historial…</string>
@@ -148,7 +148,7 @@
   <string name="backup_exported">Copia guardada (%d notificaciones)</string>
   <string name="backup_imported">Copia restaurada (%d notificaciones)</string>
   <string name="backup_failed">No se pudo guardar la copia</string>
-  <string name="backup_invalid">Ese archivo no es una copia de Pinnit</string>
+  <string name="backup_invalid">Ese archivo no es una copia de Chincheta</string>
   <string name="app_lock_prompt_subtitle">Desbloquea para ver tus notificaciones</string>
   <string name="app_lock_confirm_subtitle">Confirma que eres tú</string>
   <string name="app_lock_unavailable">Primero configura una huella o un bloqueo de pantalla en los ajustes del móvil</string>
@@ -158,4 +158,5 @@
   <string name="widget_empty">No hay nada fijado</string>
   <string name="widget_description">Tus notificaciones fijadas</string>
   <string name="trash_just_now">hace un momento</string>
+  <string name="based_on_pinnit">Basada en Pinnit de Sasikanth Miriyampalli (Apache 2.0)</string>
 </resources>

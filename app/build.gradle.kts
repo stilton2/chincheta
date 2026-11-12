@@ -34,7 +34,8 @@ android {
   compileSdk = libs.versions.sdk.compile.get().toInt()
 
   defaultConfig {
-    applicationId = "dev.sasikanth.pinnit"
+    // Published as "Chincheta", a fork of Pinnit with its own id so it never clashes with the original.
+    applicationId = "io.github.stilton2.chincheta"
     minSdk = libs.versions.sdk.min.get().toInt()
     targetSdk = libs.versions.sdk.target.get().toInt()
 
@@ -78,7 +79,8 @@ android {
     release {
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = signingConfigs.getByName("release")
+      // Signed only when the maintainer's key file exists; anyone else gets an unsigned build to sign with their own key.
+      signingConfig = if (keystoreProps.getProperty("PINNIT_KEYSTORE_FILE") != null) signingConfigs.getByName("release") else null
     }
     debug {
       applicationIdSuffix = ".debug"

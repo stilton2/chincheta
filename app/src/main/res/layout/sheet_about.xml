@@ -46,6 +46,16 @@
         android:layout_height="wrap_content"
         tools:text="VERSION 1.0.0" />
 
+      <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/basedOnPinnitTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="?attr/selectableItemBackground"
+        android:text="@string/based_on_pinnit"
+        android:textAppearance="?attr/textAppearanceBody2"
+        android:textColor="?attr/colorSecondary" />
+
     </LinearLayout>
 
 <!--    <LinearLayout-->

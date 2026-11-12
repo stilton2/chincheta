@@ -65,7 +65,7 @@
   <!-- OEM Warning Dialog -->
   <string name="oem_warning_title">Aviso sobre o seu aparelho</string>
   <string name="oem_warning_subtitle">
-    Algumas fabricantes são conhecidas por fechar aplicativos de maneira agressiva. Pinnit não roda em segundo plano, mas se for fechado pelo sistema, notificações vindas de Pinnit serão retiradas do seu painel e só retornarão quando o app for lançado novamente.
+    Algumas fabricantes são conhecidas por fechar aplicativos de maneira agressiva. Chincheta não roda em segundo plano, mas se for fechado pelo sistema, notificações vindas de Chincheta serão retiradas do seu painel e só retornarão quando o app for lançado novamente.
     \n
     \nPara evitar isto, visite o link abaixo e siga as instruções.
   </string>

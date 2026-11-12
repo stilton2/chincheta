@@ -1,0 +1,20 @@
+Chincheta
+Copyright 2026 the Chincheta authors
+
+This product is a modified version of Pinnit
+(https://github.com/msasikanth/pinnit), version v1.6.0,
+Copyright 2020 Sasikanth Miriyampalli, licensed under the Apache License 2.0.
+Original design by Eduardo Pratti.
+
+Changes made in Chincheta (see the git history after tag v1.6.0 for details):
+- Renamed the app to "Chincheta" with application id io.github.stilton2.chincheta.
+- Implemented the notification history listener (empty in Pinnit v1.6.0).
+- Pinned notifications mimic the source notification, have no actions and are
+  re-posted when swiped away.
+- Added search, per-app filter, day sections, long-press actions, trash,
+  clear history, ignored apps, history retention, WhatsApp deleted-message
+  marking, auto-pin rules, JSON backup/restore, home screen widget and an
+  optional fingerprint/screen lock.
+- Release signing reads an optional properties file outside the repository.
+
+Chincheta was developed with the help of Claude (Anthropic) using Claude Code.
