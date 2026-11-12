@@ -157,4 +157,5 @@
   <string name="widget_title">Fijadas</string>
   <string name="widget_empty">No hay nada fijado</string>
   <string name="widget_description">Tus notificaciones fijadas</string>
+  <string name="trash_just_now">hace un momento</string>
 </resources>

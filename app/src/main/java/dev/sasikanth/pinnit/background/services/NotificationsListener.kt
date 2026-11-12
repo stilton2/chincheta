@@ -9,6 +9,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.sasikanth.pinnit.data.preferences.HistorySettings
 import dev.sasikanth.pinnit.notifications.NotificationRepository
 import dev.sasikanth.pinnit.utils.DispatcherProvider
+import dev.sasikanth.pinnit.utils.RetractedMessages
 import dev.sasikanth.pinnit.utils.normalizedForSearch
 import dev.sasikanth.pinnit.utils.notification.NotificationUtil
 import dev.sasikanth.pinnit.utils.notification.SourceAppIcons
@@ -36,14 +37,6 @@ class NotificationsListener : NotificationListenerService() {
     // Same app posting the same text again within this window is an update, not a new notification.
     private val DUPLICATE_WINDOW: Duration = Duration.ofMinutes(10)
 
-    // WhatsApp replaces a message deleted by its sender with one of these texts.
-    private val RETRACTING_APPS = setOf("com.whatsapp", "com.whatsapp.w4b")
-    private val RETRACTED_PLACEHOLDERS = listOf(
-      "se eliminó este mensaje",
-      "este mensaje fue eliminado",
-      "mensaje eliminado",
-      "this message was deleted"
-    )
     private val RETRACT_LOOKBACK: Duration = Duration.ofDays(2)
 
     private val IGNORED_CATEGORIES = setOf(
@@ -186,17 +179,11 @@ class NotificationsListener : NotificationListenerService() {
     return rules.any { text.contains(it) }
   }
 
-  private fun isRetractedPlaceholder(sourcePackage: String, content: String?): Boolean {
-    if (sourcePackage !in RETRACTING_APPS || content == null) return false
-    val text = content.lowercase().trim().removeSuffix(".")
-    // Group chats prefix the sender: "Ana: Se eliminó este mensaje"
-    val message = text.substringAfter(": ", text)
-    // Allow a leading symbol/emoji before the placeholder text.
-    return RETRACTED_PLACEHOLDERS.any { message.endsWith(it) && message.length <= it.length + 4 }
-  }
+  private fun isRetractedPlaceholder(sourcePackage: String, content: String?) =
+    RetractedMessages.isPlaceholder(sourcePackage, content)
 
   private suspend fun markRetracted(sourcePackage: String, title: String, content: String, postedAt: Instant) {
-    val senderPrefix = if (content.contains(": ")) content.substringBefore(": ") + ": " else null
+    val senderPrefix = RetractedMessages.senderPrefix(content)
     val candidates = repository.recentFromSourceWithTitle(sourcePackage, title, postedAt.minus(RETRACT_LOOKBACK))
     val original = candidates.firstOrNull { candidate ->
       val text = candidate.content.orEmpty()

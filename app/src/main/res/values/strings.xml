@@ -157,4 +157,5 @@
   <string name="widget_title">Pinned</string>
   <string name="widget_empty">Nothing pinned</string>
   <string name="widget_description">Your pinned notifications</string>
+  <string name="trash_just_now">just now</string>
 </resources>

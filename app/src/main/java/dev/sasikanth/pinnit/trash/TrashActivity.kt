@@ -150,7 +150,12 @@ private class TrashAdapter(
     val context = holder.binding.root.context
     val source = item.sourceAppName ?: context.getString(R.string.app_name)
     val deletedAgo = item.deletedAt?.let {
-      DateUtils.getRelativeTimeSpanString(it.toEpochMilli(), System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)
+      val now = System.currentTimeMillis()
+      if (now - it.toEpochMilli() < DateUtils.MINUTE_IN_MILLIS) {
+        context.getString(R.string.trash_just_now)
+      } else {
+        DateUtils.getRelativeTimeSpanString(it.toEpochMilli(), now, DateUtils.MINUTE_IN_MILLIS)
+      }
     }
     holder.binding.trashItemMeta.text = if (deletedAgo != null) {
       context.getString(R.string.trash_item_meta, source, deletedAgo)

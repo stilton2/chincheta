@@ -42,7 +42,7 @@ class DayHeaderDecoration(
 
   fun labelAt(position: Int): String? {
     val item = itemAt(position) ?: return null
-    if (item.isPinned) return appContext.getString(R.string.section_pinned)
+    if (item.isPinned) return appContext.getString(R.string.section_pinned).uppercase(Locale.getDefault())
 
     val zone = ZoneId.systemDefault()
     val day = item.updatedAt.atZone(zone).toLocalDate()
