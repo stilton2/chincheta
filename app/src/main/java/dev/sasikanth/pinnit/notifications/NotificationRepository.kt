@@ -82,4 +82,33 @@ class NotificationRepository @Inject constructor(
   suspend fun removeSchedule(notificationId: UUID) {
     notificationDao.removeSchedule(notificationId)
   }
+
+  suspend fun saveFromHistory(
+    title: String,
+    content: String?,
+    sourcePackage: String,
+    sourceAppName: String,
+    postedAt: Instant
+  ) {
+    val notification = PinnitNotification(
+      uuid = UUID.randomUUID(),
+      title = title,
+      content = content,
+      isPinned = false,
+      createdAt = postedAt,
+      updatedAt = postedAt,
+      deletedAt = null,
+      sourcePackage = sourcePackage,
+      sourceAppName = sourceAppName
+    )
+    notificationDao.save(listOf(notification))
+  }
+
+  suspend fun latestFromSource(sourcePackage: String): PinnitNotification? {
+    return notificationDao.latestFromSource(sourcePackage)
+  }
+
+  suspend fun deleteHistoryOlderThan(before: Instant) {
+    notificationDao.deleteHistoryOlderThan(before)
+  }
 }

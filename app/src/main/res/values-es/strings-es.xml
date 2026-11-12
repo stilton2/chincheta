@@ -86,4 +86,8 @@
     \nPara evitarlo, visite el siguiente enlace y siga las instrucciones.
   </string>
   <string name="oem_warning_show_instructions">Mostrar instrucciones</string>
+  <string name="listener_access_title">Historial de notificaciones</string>
+  <string name="listener_access_message">Pinnit necesita acceso a las notificaciones para guardar las que te llegan. Activa Pinnit en la siguiente pantalla.</string>
+  <string name="listener_access_open_settings">Abrir ajustes</string>
+  <string name="listener_access_later">Más tarde</string>
 </resources>

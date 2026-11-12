@@ -1,6 +1,8 @@
 package dev.sasikanth.pinnit.notifications.adapter
 
+import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.graphics.drawable.Drawable
 import android.text.format.DateUtils
 import android.text.format.DateUtils.FORMAT_ABBREV_RELATIVE
 import android.text.format.DateUtils.SECOND_IN_MILLIS
@@ -37,6 +39,9 @@ class NotificationsListAdapter(
   private val onEditNotificationScheduleClicked: (PinnitNotification) -> Unit,
   private val onRemoveNotificationScheduleClicked: (PinnitNotification) -> Unit
 ) : ListAdapter<PinnitNotification, RecyclerView.ViewHolder>(NotificationsDiffCallback) {
+
+  // Icons of the apps that posted history entries, by package name.
+  private val appIconCache = mutableMapOf<String, Drawable?>()
 
   override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
     val context = parent.context
@@ -135,8 +140,38 @@ class NotificationsListAdapter(
       binding.divider.isSelected = notification.isPinned
 
       renderScheduleButton(notification)
+      renderSource(notification)
 
       itemView.transitionName = "notification_view_${notification.hashCode()}"
+    }
+
+    private fun renderSource(notification: PinnitNotification) {
+      val sourcePackage = notification.sourcePackage
+      if (sourcePackage == null) {
+        binding.appName.setText(R.string.app_name)
+        binding.appIcon.setImageResource(R.drawable.ic_pinnit_app_icon)
+        return
+      }
+
+      binding.appName.text = notification.sourceAppName ?: sourcePackage
+      val icon = appIconCache.getOrPut(sourcePackage) {
+        try {
+          context.packageManager.getApplicationIcon(sourcePackage)
+        } catch (e: PackageManager.NameNotFoundException) {
+          null
+        }
+      }
+      if (icon != null) {
+        binding.appIcon.setImageDrawable(icon)
+        binding.appIcon.imageTintList = null
+      } else {
+        binding.appIcon.setImageResource(R.drawable.ic_pinnit_app_icon)
+      }
+    }
+
+    private fun hasRealAppIcon(): Boolean {
+      val sourcePackage = notification?.sourcePackage ?: return false
+      return appIconCache[sourcePackage] != null
     }
 
     fun addTimestampUpdateListener() {
@@ -235,7 +270,7 @@ class NotificationsListAdapter(
     }
 
     private fun colorsForNotificationUnPinned() {
-      binding.appIcon.imageTintList = ColorStateList.valueOf(context.resolveColor(attrRes = R.attr.colorSecondary))
+      binding.appIcon.imageTintList = if (hasRealAppIcon()) null else ColorStateList.valueOf(context.resolveColor(attrRes = R.attr.colorSecondary))
       binding.appName.setTextColor(context.resolveColor(attrRes = R.attr.colorSecondary))
       binding.infoSeparator.setTextColor(context.resolveColor(attrRes = R.attr.colorOnBackgroundVariant))
       binding.timeStamp.setTextColor(context.resolveColor(attrRes = R.attr.colorOnBackgroundVariant))
@@ -249,7 +284,7 @@ class NotificationsListAdapter(
     }
 
     private fun colorsForNotificationPinned() {
-      binding.appIcon.imageTintList = ColorStateList.valueOf(context.resolveColor(attrRes = R.attr.colorOnPrimaryVariant))
+      binding.appIcon.imageTintList = if (hasRealAppIcon()) null else ColorStateList.valueOf(context.resolveColor(attrRes = R.attr.colorOnPrimaryVariant))
       binding.appName.setTextColor(context.resolveColor(attrRes = R.attr.colorOnPrimaryVariant))
       binding.infoSeparator.setTextColor(context.resolveColor(attrRes = R.attr.colorOnPrimaryVariant))
       binding.timeStamp.setTextColor(context.resolveColor(attrRes = R.attr.colorOnPrimaryVariant))

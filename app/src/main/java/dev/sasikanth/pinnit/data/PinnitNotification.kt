@@ -27,8 +27,14 @@ data class PinnitNotification(
   val updatedAt: Instant,
   val deletedAt: Instant? = null,
   @Embedded
-  val schedule: Schedule? = null
+  val schedule: Schedule? = null,
+  // Filled only for entries captured from other apps' notifications (history).
+  val sourcePackage: String? = null,
+  val sourceAppName: String? = null
 ) : Parcelable {
+
+  val isFromHistory: Boolean
+    get() = sourcePackage != null
 
   val hasSchedule: Boolean
     get() = schedule != null
@@ -70,5 +76,24 @@ data class PinnitNotification(
 
     @Query("UPDATE PinnitNotification SET scheduleDate = null, scheduleTime = null, scheduleType = null WHERE uuid = :notificationId")
     suspend fun removeSchedule(notificationId: UUID)
+
+    @Query(
+      """
+        SELECT *
+        FROM PinnitNotification
+        WHERE sourcePackage = :sourcePackage
+        ORDER BY createdAt DESC
+        LIMIT 1
+      """
+    )
+    suspend fun latestFromSource(sourcePackage: String): PinnitNotification?
+
+    @Query(
+      """
+        DELETE FROM PinnitNotification
+        WHERE sourcePackage IS NOT NULL AND isPinned = 0 AND createdAt < :before
+      """
+    )
+    suspend fun deleteHistoryOlderThan(before: Instant)
   }
 }

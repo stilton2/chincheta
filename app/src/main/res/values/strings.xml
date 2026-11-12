@@ -86,4 +86,8 @@
     \nTo avoid this, visit the link below and follow the instructions.
   </string>
   <string name="oem_warning_show_instructions">show instructions</string>
+  <string name="listener_access_title">Notification history</string>
+  <string name="listener_access_message">Pinnit needs notification access to save the notifications you receive. Enable Pinnit in the next screen.</string>
+  <string name="listener_access_open_settings">Open settings</string>
+  <string name="listener_access_later">Later</string>
 </resources>
