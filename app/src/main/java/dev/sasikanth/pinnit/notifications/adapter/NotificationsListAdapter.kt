@@ -133,8 +133,13 @@ class NotificationsListAdapter(
       itemView.tag = notification
 
       binding.titleTextView.text = notification.title
-      binding.contentTextView.text = notification.content
-      binding.contentTextView.isVisible = notification.content.isNullOrBlank().not()
+      // A message the sender deleted gets a note under its text (in the header it hid the time).
+      binding.contentTextView.text = if (notification.retracted) {
+        listOfNotNull(notification.content, context.getString(R.string.retracted_note)).joinToString("\n")
+      } else {
+        notification.content
+      }
+      binding.contentTextView.isVisible = notification.content.isNullOrBlank().not() || notification.retracted
       setTimestamp()
 
       binding.togglePinIcon.isChecked = notification.isPinned
@@ -161,11 +166,7 @@ class NotificationsListAdapter(
       }
 
       val appName = notification.sourceAppName ?: sourcePackage
-      binding.appName.text = if (notification.retracted) {
-        context.getString(R.string.retracted_label, appName)
-      } else {
-        appName
-      }
+      binding.appName.text = appName
       val icon = appIconCache.getOrPut(sourcePackage) {
         try {
           context.packageManager.getApplicationIcon(sourcePackage)
@@ -174,8 +175,9 @@ class NotificationsListAdapter(
         }
       }
       if (icon != null) {
-        binding.appIcon.setImageDrawable(icon)
+        // Each row needs its own copy: a Drawable shared by several ImageViews gets the tint one of them applies.
         binding.appIcon.imageTintList = null
+        binding.appIcon.setImageDrawable(icon.constantState?.newDrawable(context.resources)?.mutate() ?: icon)
       } else {
         binding.appIcon.setImageResource(R.drawable.ic_pinnit_app_icon)
       }

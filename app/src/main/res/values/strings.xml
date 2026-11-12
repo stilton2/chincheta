@@ -132,7 +132,7 @@
   <string name="section_pinned">Pinned</string>
   <string name="section_today">Today</string>
   <string name="section_yesterday">Yesterday</string>
-  <string name="retracted_label">%s · deleted by sender</string>
+  <string name="retracted_note">🚫 Deleted by the sender</string>
   <string name="menu_auto_pin">Auto-pin…</string>
   <string name="menu_backup">Backup…</string>
   <string name="menu_app_lock">Fingerprint lock</string>

@@ -11,6 +11,23 @@ Basada en [Pinnit](https://github.com/msasikanth/pinnit) de Sasikanth Miriyampal
 
 ---
 
+## Capturas
+
+<table>
+  <tr>
+    <td><img src="docs/capturas/1-lista.png" width="240" alt="Lista con fijadas y separadores por día"></td>
+    <td><img src="docs/capturas/2-dias.png" width="240" alt="Historial por días y mensaje borrado por el remitente"></td>
+    <td><img src="docs/capturas/5-menu.png" width="240" alt="Menú con todas las opciones"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/capturas/3-cortina.png" width="240" alt="Notificaciones fijadas en la cortina, con el icono de su app"></td>
+    <td><img src="docs/capturas/4-buscar.png" width="240" alt="Buscador"></td>
+    <td><img src="docs/capturas/6-widget.png" width="240" alt="Widget con las fijadas"></td>
+  </tr>
+</table>
+
+*Capturas hechas en el emulador con datos inventados.*
+
 ## Créditos
 
 Chincheta no existiría sin **Pinnit**, creada por **[Sasikanth Miriyampalli](https://github.com/msasikanth)**
@@ -37,8 +54,8 @@ Chincheta añade:
 - **Pulsación larga**: copiar, compartir, ver solo esa app o dejar de guardar sus notificaciones.
 - **Papelera** (restaurar o borrar para siempre; se vacía sola a los 30 días) y **borrar historial** por apps, con deshacer.
 - **Apps ignoradas** y **borrado automático** configurable (7, 30, 90 días, 1 año o nunca).
-- **Mensajes borrados de WhatsApp**: si el remitente borra un mensaje, se conserva el texto y se marca como
-  «borrado por el remitente».
+- **Mensajes borrados de WhatsApp**: si el remitente borra un mensaje, se conserva el texto y debajo aparece
+  «🚫 Borrado por el remitente».
 - **Fijar automáticamente** las notificaciones que contengan una palabra o un nombre.
 - **Copia de seguridad** a un archivo JSON (historial, fijadas, papelera y ajustes) y restauración.
 - **Widget** con las notificaciones fijadas.
@@ -90,6 +107,9 @@ escribió el código, compiló y ejecutó las pruebas. Los commits llevan la lí
 - **Un móvil Samsung con Android 16**: uso real diario, historial, fijar y bloqueo con huella.
 
 ## Compilar
+
+Detalles de cómo está hecha por dentro, cómo probarla y cómo publicar versiones: [docs/DESARROLLO.md](docs/DESARROLLO.md).
+Historial de versiones: [CHANGELOG.md](CHANGELOG.md).
 
 Necesitas JDK 17 y el SDK de Android con `platforms;android-34`.
 

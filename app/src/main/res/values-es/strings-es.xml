@@ -132,7 +132,7 @@
   <string name="section_pinned">Fijadas</string>
   <string name="section_today">Hoy</string>
   <string name="section_yesterday">Ayer</string>
-  <string name="retracted_label">%s · borrado por el remitente</string>
+  <string name="retracted_note">🚫 Borrado por el remitente</string>
   <string name="menu_auto_pin">Fijar automáticamente…</string>
   <string name="menu_backup">Copia de seguridad…</string>
   <string name="menu_app_lock">Bloqueo con huella</string>
